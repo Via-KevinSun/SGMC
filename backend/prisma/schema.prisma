@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma-client" 
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(OPERATOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  GUARD
+}
+
+
+model Motorista {
+  id        String   @id @default(uuid())
+  nome      String
+  documento String   @unique
+  telefone  String?
+  veiculos  Veiculo[]
+
+  @@map("motorista")
+}
+
+model Veiculo {
+  id           String     @id @default(uuid())
+  placa        String     @unique
+  modelo       String?
+  motoristaId  String
+  motorista    Motorista  @relation(fields: [motoristaId], references: [id])
+  movimentacoes Movimentacao[]
+
+  @@map("veiculo")
+}
+
+model Zona {
+  id         String     @id @default(uuid())
+  nome       String     @unique // ex: Zona A, Zona B
+  contentores Contentor[]
+
+  @@map("zona")
+}
+
+model Contentor {
+  id           String     @id @default(uuid())
+  codigo       String     @unique // ex: MSCU1234567
+  tipo         TipoContentor
+  estado       EstadoContentor
+  zonaId       String?
+  zona         Zona?      @relation(fields: [zonaId], references: [id])
+  movimentacoes Movimentacao[]
+
+  @@map("contentor")
+}
+
+enum TipoContentor {
+  PES_20
+  PES_40
+  REEFER
+  TANQUE
+}
+
+enum EstadoContentor {
+  VAZIO
+  CHEIO
+}
+
+model Movimentacao {
+  id           String     @id @default(uuid())
+  tipo         TipoMovimentacao
+  contentorId  String
+  contentor    Contentor  @relation(fields: [contentorId], references: [id])
+  veiculoId    String
+  veiculo      Veiculo    @relation(fields: [veiculoId], references: [id])
+  dataHora     DateTime   @default(now())
+
+  @@map("movimentacao")
+}
+
+enum TipoMovimentacao {
+  GATE_IN
+  GATE_OUT
+}
